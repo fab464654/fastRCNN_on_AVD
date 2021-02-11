@@ -30,15 +30,57 @@ def main():
         raise FileNotFoundError("dataset root dir not exist!")
 
     # load train data set
-    train_data_set = coco(cfg.data_root_dir, 'train', '2017', data_transform["train"])
+    #train_data_set = coco(cfg.data_root_dir, 'train', '2017', data_transform["train"])
     batch_size = cfg.batch_size
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
     print('Using {} dataloader workers'.format(nw))
+
+    #MY FIX::::::::::::::::
+    
+    #import active_vision_dataset_processing.data_loading
+    import transforms, active_vision_dataset
+
+    #Include all instances
+    pick_trans = transforms.PickInstances(range(33))
+
+    TRAIN_PATH = "./google_drive/MyDrive/ColabNotebooks/Project/train2017"
+
+
+    train_data_set = active_vision_dataset.AVD(root=TRAIN_PATH, train=True,
+                                        target_transform=pick_trans,
+                                        scene_list=['Home_001_1',
+                                                    'Home_001_2',
+                                                    'Home_002_1',
+                                                    'Home_003_1',
+                                                    'Home_003_2',
+                                                    'Home_004_1',
+                                                    'Home_004_2',
+                                                    'Home_005_1',
+                                                    'Home_006_1',
+                                                    'Home_007_1',
+                                                    'Home_008_1',
+                                                    'Home_014_1',
+                                                    'Home_014_2',
+                                                    'Home_011_1',
+                                                    'Home_010_1',
+                                                    'Home_015_1',
+                                                    'Home_016_1'],
+                                          fraction_of_no_box=-1)
+     
+    
+    train_data_loader = torch.utils.data.DataLoader(train_data_set,
+                              batch_size=batch_size,
+                              shuffle=True,
+                              num_workers=nw,
+                              collate_fn=active_vision_dataset.collate
+                              )
+    """
     train_data_loader = torch.utils.data.DataLoader(train_data_set,
                                                     batch_size=batch_size,
                                                     shuffle=True,
                                                     num_workers=nw,
                                                     collate_fn=train_data_set.collate_fn)
+    """
 
     # load validation data set
     val_data_set = coco(cfg.data_root_dir, 'val', '2017', data_transform["val"])
@@ -46,7 +88,8 @@ def main():
                                                       batch_size=batch_size,
                                                       shuffle=False,
                                                       num_workers=nw,
-                                                      collate_fn=train_data_set.collate_fn)
+                                                      collate_fn=active_vision_dataset.collate)
+                                                      #collate_fn=train_data_set.collate_fn)
 
     # create model num_classes equal background + 80 classes
     model = create_model(num_classes=cfg.num_class)
