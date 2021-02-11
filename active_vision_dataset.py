@@ -11,41 +11,56 @@ annotation_filename = 'annotations.json'
 import torch
 def collate(batch):
     images = []
-    labels = []
+    id_list = []
+    id_dict_list = []
     boxes_dict_list = []
     box_list = []
+
+    targets = []
+
     for img,label in batch:
+        
+        img = torch.tensor(img)
+        img = img.permute(2, 0, 1)
+        #print(img.shape)
+
         images.append(img)
-        print("label ",len(label[0]), label )
+        #print("label ",len(label[0]), label )
         for j in range (len(label[0])):
-          print("single label: ", label[0][j][:4]) #Just to check        
+          #print("single label: ", label[0][j][:4]) #Just to check        
+          
           box = label[0][j][:4] #Single box
           box_list.append(box)
-          #print("shape: ",box.shape)
+          
+          ids = label[0][j][5] #Single id label
+          id_list.append(ids)
 
         box_list_tensor = torch.tensor(box_list)
-        box_dict =	{
-          "boxes": box_list_tensor
-        }
-        print("dict:",box_dict)
-        boxes_dict_list.append(box_dict)
+        id_list_tensor = torch.tensor(id_list)
 
-        labels.append(label[0][0])
+        targets =	{
+          "boxes": box_list_tensor,
+          "labels": id_list_tensor
+        }
+
+
         
+
+    print("dict:",targets)
+
+    """
     if isinstance(labels[0],int):#classification id labels
         labels = np.array(labels)
 
     if len(images) == 1:
         images = images[0]
         labels = labels[0]
+    """
 
-    
+    #print("lista: ",boxes_dict_list)
 
-    print("lista: ",boxes_dict_list)
-    #print("aosfmnao:",labels_dict.items())
-    #print("labelll: ",labels)
-    return [images,boxes_dict_list]
-    #return [images,labels]
+    #return [images, boxes_dict_list]
+    return [images,targets]
 
 
 class AVD(object):
